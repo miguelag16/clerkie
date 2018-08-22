@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "218918881197",
+    "firebase_url": "https://clerkie-coding-challenge.firebaseio.com",
+    "project_id": "clerkie-coding-challenge",
+    "storage_bucket": "clerkie-coding-challenge.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218918881197:android:da95c6f2695458ea",
+        "android_client_info": {
+          "package_name": "clerkie.clerkie_android_coding_challenge"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "218918881197-5bmpg9kggtndecqasosrbfg40gno8mt9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "clerkie.clerkie_android_coding_challenge",
+            "certificate_hash": "71b7e9a6ae1fc89874b9423f9d730b48ec8b863d"
+          }
+        },
+        {
+          "client_id": "218918881197-ca1ga4n3mbjv0ff1bf96uggpsaaksm5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0dMOJ64-fdYyra2buMju4O1b5NYvtedc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "218918881197-ca1ga4n3mbjv0ff1bf96uggpsaaksm5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
