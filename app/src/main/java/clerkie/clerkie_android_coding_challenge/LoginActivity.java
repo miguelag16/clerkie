@@ -63,9 +63,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
     private void createAccount(String email, String password) {
         Log.d(TAG, "createAccount:" + email);
-//        if (!validateForm()) {
-//            return;
-//        }
+        if (!validateForm(email, password)) {
+            return;
+        }
 
 //        showProgressDialog();
 
@@ -93,6 +93,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     }
                 });
         // [END create_user_with_email]
+    }
+
+    private boolean validateForm(String email, String password) {
+        boolean valid = true;
+
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError("Required.");
+            valid = false;
+        } else {
+            mEmailView.setError(null);
+        }
+
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError("Required.");
+            valid = false;
+        } else {
+            mPasswordView.setError(null);
+        }
+
+        return valid;
     }
 
     /**
