@@ -33,6 +33,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -138,6 +139,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,6 +147,33 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         // Set up the FirebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
+
+        ActionCodeSettings actionCodeSettings =
+                ActionCodeSettings.newBuilder()
+                        // URL you want to redirect back to. The domain (www.example.com) for this
+                        // URL must be whitelisted in the Firebase Console.
+                        .setUrl("https://clerkie-coding-challenge.firebaseapp.com")
+                        // This must be true
+                        .setHandleCodeInApp(true)
+                        .setAndroidPackageName(
+                                "clerkie.clerkie_android_coding_challenge",
+                                true, /* installIfNotAvailable */
+                                "1"    /* minimumVersion */)
+                        .build();
+
+        mAuth.sendSignInLinkToEmail("miguel16@stanford.edu", actionCodeSettings)
+                .addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "Email sent.");
+                            Toast.makeText(LoginActivity.this, "email sent.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        Toast.makeText(LoginActivity.this, "email failed.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
