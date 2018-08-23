@@ -8,13 +8,6 @@ import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.app.LoaderManager.LoaderCallbacks;
-
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +17,8 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -121,27 +116,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //    });
 //    // [END create_user_with_email]
 
-    private boolean validateForm() {
-        boolean valid = true;
-
-        if (TextUtils.isEmpty(mEmailField.getText().toString())) {
-            mEmailField.setError("Required.");
-            valid = false;
-        } else {
-            mEmailField.setError(null);
-        }
-
-        if (TextUtils.isEmpty(mPasswordField.getText().toString())) {
-            mPasswordField.setError("Required.");
-            valid = false;
-        } else {
-            mPasswordField.setError(null);
-        }
-
-        // Handle passwords not being the same while registering process
-
-        return valid;
-    }
 
 
 
@@ -192,6 +166,28 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
+    private boolean validateForm() {
+        boolean valid = true;
+
+        if (TextUtils.isEmpty(mEmailField.getText().toString())) {
+            mEmailField.setError("Required.");
+            valid = false;
+        } else {
+            mEmailField.setError(null);
+        }
+
+        if (TextUtils.isEmpty(mPasswordField.getText().toString())) {
+            mPasswordField.setError("Required.");
+            valid = false;
+        } else {
+            mPasswordField.setError(null);
+        }
+
+        // Handle passwords not being the same while registering process
+
+        return valid;
+    }
+
     private void verifyNewUser() {
         ActionCodeSettings actionCodeSettings =
                 ActionCodeSettings.newBuilder()
@@ -211,12 +207,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     @Override
                     public void onComplete(@NonNull Task task) {
                         if (task.isSuccessful()) {
-                            Log.d(TAG, "Email sent.");
-                            Toast.makeText(LoginActivity.this, "email sent.",
-                                    Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "Verification mail sent successfully.");
+                        } else {
+                            Log.w(TAG, "Verification mail failed to send.");
                         }
-                        Toast.makeText(LoginActivity.this, "email failed.",
-                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
