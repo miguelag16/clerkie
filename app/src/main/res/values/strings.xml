@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">clerkie_android_coding_challenge</string>
+    <string name="app_name"> cenote </string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
