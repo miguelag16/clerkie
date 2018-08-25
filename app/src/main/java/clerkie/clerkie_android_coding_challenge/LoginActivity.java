@@ -2,9 +2,12 @@ package clerkie.clerkie_android_coding_challenge;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +21,8 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewAnimationUtils;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -123,13 +128,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
 
     // UI references.
-    private AutoCompleteTextView mEmailField;
+    private EditText mEmailField;
     private EditText mPasswordField;
     private EditText mPasswordCheckField;
 
     private View mProgressView;
     private View mLoginFormView;
 
+    private View mTransparentLinearLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +146,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mAuth = FirebaseAuth.getInstance();
 
         // Fields
-        mEmailField = (AutoCompleteTextView) findViewById(R.id.email);
+        mEmailField = (EditText) findViewById(R.id.email);
         mPasswordField = (EditText) findViewById(R.id.password);
         mPasswordCheckField = (EditText) findViewById(R.id.password_check);
 
@@ -148,10 +154,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Click listeners
         findViewById(R.id.button_sign_in).setOnClickListener(this);
         findViewById(R.id.button_register).setOnClickListener(this);
+        findViewById(R.id.circle).setOnClickListener(this);
 
         // Views
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+        mTransparentLinearLayout = findViewById(R.id.transparent_linear_layout);
     }
 
     private void createNewAccount() {
@@ -223,6 +231,59 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (i == R.id.button_sign_in) {
         } else if (i == R.id.button_register) {
             createNewAccount();
+        } else if (i == R.id.circle){
+//            if(mTransparentLinearLayout.getVisibility() == View.VISIBLE) mTransparentLinearLayout.setVisibility(View.GONE);
+//            else mTransparentLinearLayout.setVisibility(View.VISIBLE);
+
+//            ObjectAnimator animation = ObjectAnimator.ofFloat(findViewById(R.id.circle), "x",
+//                    (findViewById(R.id.root).getWidth()-findViewById(R.id.circle).getWidth())/2);
+//            animation.setDuration(1000);
+//            animation.start();
+
+            ObjectAnimator animationY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "y",
+                    mTransparentLinearLayout.getY()-10);
+            animationY.setDuration(1000);
+            animationY.start();
+
+
+            ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mTransparentLinearLayout, "alpha",
+                    mTransparentLinearLayout.getAlpha()/2);
+            animationAlpha.setDuration(1000);
+            animationAlpha.start();
+
+
+            ValueAnimator animWidth = ValueAnimator.ofInt(mTransparentLinearLayout.getMeasuredWidth(), mTransparentLinearLayout.getMeasuredWidth()-50);
+            animWidth.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    int val = (Integer) valueAnimator.getAnimatedValue();
+                    ViewGroup.LayoutParams layoutParams = mTransparentLinearLayout.getLayoutParams();
+                    layoutParams.width = val;
+                    mTransparentLinearLayout.setLayoutParams(layoutParams);
+                }
+            });
+            animWidth.setDuration(1000);
+
+            ValueAnimator animHeight = ValueAnimator.ofInt(mTransparentLinearLayout.getMeasuredHeight(), mTransparentLinearLayout.getMeasuredHeight()-50);
+            animHeight.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    int val = (Integer) valueAnimator.getAnimatedValue();
+                    ViewGroup.LayoutParams layoutParams = mTransparentLinearLayout.getLayoutParams();
+                    layoutParams.height = val;
+                    mTransparentLinearLayout.setLayoutParams(layoutParams);
+                }
+            });
+            animHeight.setDuration(1000);
+
+
+
+            animHeight.start();
+            animWidth.start();
+
+//            Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
+//                    mTransparentLinearLayout, mTransparentLinearLayout.getWidth()/2, 0, 0, mTransparentLinearLayout.getWidth()/2);
+//            revealAnimator.start();
         }
     }
 
