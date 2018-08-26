@@ -47,6 +47,8 @@
 
     <include layout="@layout/login_layout"/>
 
+    <include layout="@layout/register_layout"/>
+
 
 
     <ImageView
@@ -66,90 +68,5 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.291" />
 
-
-    <!--<ScrollView-->
-        <!--android:id="@+id/login_form"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:visibility="gone">-->
-
-        <!--<LinearLayout-->
-            <!--android:id="@+id/email_login_form"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:orientation="vertical">-->
-
-            <!--&lt;!&ndash;<android.support.design.widget.TextInputLayout&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_height="wrap_content">&ndash;&gt;-->
-
-                <!--&lt;!&ndash;<AutoCompleteTextView&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:id="@+id/email"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:hint="@string/prompt_email"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:inputType="textEmailAddress"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:maxLines="1"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:singleLine="true" />&ndash;&gt;-->
-
-            <!--&lt;!&ndash;</android.support.design.widget.TextInputLayout>&ndash;&gt;-->
-
-            <!--&lt;!&ndash;<android.support.design.widget.TextInputLayout&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_height="wrap_content">&ndash;&gt;-->
-
-                <!--&lt;!&ndash;<EditText&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:id="@+id/password"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:hint="@string/prompt_password"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:imeActionId="6"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:imeActionLabel="@string/action_sign_in"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:imeOptions="actionUnspecified"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:inputType="textPassword"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:maxLines="1"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:singleLine="true" />&ndash;&gt;-->
-
-            <!--&lt;!&ndash;</android.support.design.widget.TextInputLayout>&ndash;&gt;-->
-
-            <!--<android.support.design.widget.TextInputLayout-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:visibility="gone">-->
-
-                <!--<EditText-->
-                    <!--android:id="@+id/password_check"-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:hint="@string/prompt_password"-->
-                    <!--android:imeActionId="6"-->
-                    <!--android:imeActionLabel="@string/action_sign_in"-->
-                    <!--android:imeOptions="actionUnspecified"-->
-                    <!--android:inputType="textPassword"-->
-                    <!--android:maxLines="1"-->
-                    <!--android:singleLine="true" />-->
-
-            <!--</android.support.design.widget.TextInputLayout>-->
-
-            <!--&lt;!&ndash;<Button&ndash;&gt;-->
-                <!--&lt;!&ndash;android:id="@+id/button_sign_in"&ndash;&gt;-->
-                <!--&lt;!&ndash;style="?android:textAppearanceSmall"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_width="match_parent"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_height="wrap_content"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:layout_marginTop="16dp"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:text="@string/action_sign_in"&ndash;&gt;-->
-                <!--&lt;!&ndash;android:textStyle="bold" />&ndash;&gt;-->
-
-            <!--<Button-->
-                <!--android:id="@+id/button_register"-->
-                <!--style="?android:textAppearanceSmall"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_marginTop="16dp"-->
-                <!--android:text="@string/action_register"-->
-                <!--android:textStyle="bold" />-->
-
-        <!--</LinearLayout>-->
-    <!--</ScrollView>-->
 
 </android.support.constraint.ConstraintLayout>
