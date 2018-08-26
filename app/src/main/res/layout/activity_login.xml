@@ -54,12 +54,12 @@
     <include
         android:id="@+id/include_register_form"
         layout="@layout/register_layout"
-        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="270dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="48dp"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -68,19 +68,30 @@
 
     <ImageView
         android:id="@+id/reveal_circle"
-        android:layout_width="60dp"
+        android:layout_width="wrap_content"
         android:layout_height="60dp"
-        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="4dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/circle"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.974"
+        app:layout_constraintHorizontal_bias=".98"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.232" />
+        app:layout_constraintTop_toTopOf="@+id/include_register_form" />
 
+    <TextView
+    android:id="@+id/x_in_circle"
+    android:layout_width="21dp"
+    android:layout_height="49dp"
+    android:layout_marginBottom="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="8dp"
+    android:text="+"
+    android:textSize="36sp"
+    app:layout_constraintBottom_toBottomOf="@+id/reveal_circle"
+    app:layout_constraintEnd_toEndOf="@+id/reveal_circle"
+    app:layout_constraintStart_toStartOf="@+id/reveal_circle"
+    app:layout_constraintTop_toTopOf="@+id/reveal_circle" />
 
 </android.support.constraint.ConstraintLayout>
