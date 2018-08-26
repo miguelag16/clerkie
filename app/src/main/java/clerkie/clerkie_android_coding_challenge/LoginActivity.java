@@ -1,6 +1,7 @@
 package clerkie.clerkie_android_coding_challenge;
 
 import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
@@ -14,6 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -25,6 +28,9 @@ import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * A login screen that offers login via email/password.
@@ -112,9 +118,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText mEmailField;
     private EditText mPasswordField;
     private EditText mPasswordCheckField;
+    private View mRevealCircle;
 
     // Register box UI references
-    private View mRegisterLL;
+    private View mRegisterForm;
     private ImageView mRegisterUserImage;
     private TextInputLayout mRegisterUserInput;
     private EditText mRegisterUser;
@@ -144,10 +151,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Click listeners
         findViewById(R.id.button_sign_in).setOnClickListener(this);
         findViewById(R.id.register_button).setOnClickListener(this);
-        findViewById(R.id.circle).setOnClickListener(this);
+        findViewById(R.id.reveal_circle).setOnClickListener(this);
 
         // Set register UI views
-        mRegisterLL = findViewById(R.id.register_linear_layout);
+        mRegisterForm = findViewById(R.id.include_register_form);
         mRegisterUserImage = findViewById(R.id.register_username_image);
         mRegisterUserInput = findViewById(R.id.register_username_input);
         mRegisterUser = findViewById(R.id.register_username);
@@ -159,7 +166,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         // Views
         mProgressView = findViewById(R.id.login_progress);
-        mTransparentLinearLayout = findViewById(R.id.login_linear_layout);
+        mRevealCircle = findViewById(R.id.reveal_circle);
+        mTransparentLinearLayout = findViewById(R.id.include_login_form);
     }
 
     private void createNewAccount() {
@@ -231,83 +239,89 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (i == R.id.button_sign_in) {
         } else if (i == R.id.register_button) {
             createNewAccount();
-        } else if (i == R.id.circle){
-//            if(mTransparentLinearLayout.getVisibility() == View.VISIBLE) mTransparentLinearLayout.setVisibility(View.GONE);
-//            else mTransparentLinearLayout.setVisibility(View.VISIBLE);
+        } else if (i == R.id.reveal_circle) {
 
-//            ObjectAnimator animation = ObjectAnimator.ofFloat(findViewById(R.id.circle), "x",
-//                    (findViewById(R.id.root).getWidth()-findViewById(R.id.circle).getWidth())/2);
-//            animation.setDuration(1000);
-//            animation.start();
+            runForwardAnimations();
 
-            ObjectAnimator animationY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "y",
-                    mTransparentLinearLayout.getY()-10);
-            animationY.setDuration(1000);
-            animationY.start();
+        }
+    }
+
+    private void runForwardAnimations(){
+        ObjectAnimator animationCircleX = ObjectAnimator.ofFloat(mRevealCircle, "x",
+                mTransparentLinearLayout.getX()+(mTransparentLinearLayout.getWidth()-mRevealCircle.getWidth())/2);
+        animationCircleX.setDuration(500);
+
+        ObjectAnimator animationCircleY = ObjectAnimator.ofFloat(mRevealCircle, "y",
+                mTransparentLinearLayout.getY()+(mTransparentLinearLayout.getHeight()-mRevealCircle.getHeight())/2);
+        animationCircleY.setDuration(500);
+
+        ObjectAnimator animationY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "y",
+                mTransparentLinearLayout.getY()-35);
+        animationY.setDuration(1000);
+
+        ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mTransparentLinearLayout, "alpha",
+                mTransparentLinearLayout.getAlpha()/2);
+        animationAlpha.setDuration(1000);
+
+        ObjectAnimator animationScaleX = ObjectAnimator.ofFloat(mTransparentLinearLayout, "scaleX", 0.95f);
+        animationScaleX.setDuration(1000);
+
+        ObjectAnimator animationScaleY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "scaleY", 0.95f);
+        animationScaleY.setDuration(1000);
+
+        animationCircleX.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mRevealCircle.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        animationCircleX.start();
+        animationCircleY.start();
+
+        animationY.start();
+        animationAlpha.start();
+        animationScaleX.start();
+        animationScaleY.start();
+
+        displayRegisterForm();
+    }
 
 
-            ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mTransparentLinearLayout, "alpha",
-                    mTransparentLinearLayout.getAlpha()/2);
-            animationAlpha.setDuration(1000);
-            animationAlpha.start();
-
-
-            ValueAnimator animWidth = ValueAnimator.ofInt(mTransparentLinearLayout.getMeasuredWidth(), mTransparentLinearLayout.getMeasuredWidth()-50);
-            animWidth.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    int val = (Integer) valueAnimator.getAnimatedValue();
-                    ViewGroup.LayoutParams layoutParams = mTransparentLinearLayout.getLayoutParams();
-                    layoutParams.width = val;
-                    mTransparentLinearLayout.setLayoutParams(layoutParams);
-                }
-            });
-            animWidth.setDuration(1000);
-
-            ValueAnimator animHeight = ValueAnimator.ofInt(mTransparentLinearLayout.getMeasuredHeight(), mTransparentLinearLayout.getMeasuredHeight()-50);
-            animHeight.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    int val = (Integer) valueAnimator.getAnimatedValue();
-                    ViewGroup.LayoutParams layoutParams = mTransparentLinearLayout.getLayoutParams();
-                    layoutParams.height = val;
-                    mTransparentLinearLayout.setLayoutParams(layoutParams);
-                }
-            });
-            animHeight.setDuration(1000);
-
-            animHeight.start();
-            animWidth.start();
-
-
-
-
-
-
+    private void displayRegisterForm(){
             Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
-                    mRegisterLL,
-                    mRegisterLL.getWidth()/2,
-                    mRegisterLL.getHeight()/2,
-                    0,
-                    mRegisterLL.getWidth()/2);
+                    mRegisterForm,
+                    mRegisterForm.getWidth()/2,
+                    mRegisterForm.getHeight()/2,
+                    mRevealCircle.getWidth()/2,
+                    mRegisterForm.getWidth()/2);
 
+            revealAnimator.setStartDelay(500);
             revealAnimator.setDuration(1000);
 
             revealAnimator.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
-                    mRegisterLL.setVisibility(View.VISIBLE);
+                    mRegisterForm.setVisibility(View.VISIBLE);
                 }
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mRegisterUserImage.setVisibility(View.VISIBLE);
-                    mRegisterUserInput.setVisibility(View.VISIBLE);
-                    mRegisterUser.setVisibility(View.VISIBLE);
-                    mRegisterPasswordImage.setVisibility(View.VISIBLE);
-                    mRegisterPasswordInput.setVisibility(View.VISIBLE);
-                    mRegisterPassword.setVisibility(View.VISIBLE);
-                    mRegisterButton.setVisibility(View.VISIBLE);
+
                 }
 
                 @Override
@@ -321,126 +335,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 }
             });
             revealAnimator.start();
-        }
+
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//    /**
-//     * Attempts to sign in or register the account specified by the login form.
-//     * If there are form errors (invalid email, missing fields, etc.), the
-//     * errors are presented and no actual login attempt is made.
-//     */
-//    private void attemptLogin() {
-//        if (mAuthTask != null) {
-//            return;
-//        }
-//
-//        // Reset errors.
-//        mEmailView.setError(null);
-//        mPasswordView.setError(null);
-//
-//        // Store values at the time of the login attempt.
-//        String email = mEmailView.getText().toString();
-//        String password = mPasswordView.getText().toString();
-//
-//        boolean cancel = false;
-//        View focusView = null;
-//
-//        // Check for a valid password, if the user entered one.
-//        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-//            mPasswordView.setError(getString(R.string.error_invalid_password));
-//            focusView = mPasswordView;
-//            cancel = true;
-//        }
-//
-//        // Check for a valid email address.
-//        if (TextUtils.isEmpty(email)) {
-//            mEmailView.setError(getString(R.string.error_field_required));
-//            focusView = mEmailView;
-//            cancel = true;
-//        } else if (!isEmailValid(email)) {
-//            mEmailView.setError(getString(R.string.error_invalid_email));
-//            focusView = mEmailView;
-//            cancel = true;
-//        }
-//
-//        if (cancel) {
-//            // There was an error; don't attempt login and focus the first
-//            // form field with an error.
-//            focusView.requestFocus();
-//        } else {
-//            // Show a progress spinner, and kick off a background task to
-//            // perform the user login attempt.
-//            showProgress(true);
-//            mAuthTask = new UserLoginTask(email, password);
-//            mAuthTask.execute((Void) null);
-//        }
-//    }
-
-    private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
-    }
-
-//    /**
-//     * Shows the progress UI and hides the login form.
-//     */
-//    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-//    private void showProgress(final boolean show) {
-//        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-//        // for very easy animations. If available, use these APIs to fade-in
-//        // the progress spinner.
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-//            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-//
-//            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-//            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-//                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-//                @Override
-//                public void onAnimationEnd(Animator animation) {
-//                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-//                }
-//            });
-//
-//            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-//            mProgressView.animate().setDuration(shortAnimTime).alpha(
-//                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-//                @Override
-//                public void onAnimationEnd(Animator animation) {
-//                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-//                }
-//            });
-//        } else {
-//            // The ViewPropertyAnimator APIs are not available, so simply show
-//            // and hide the relevant UI components.
-//            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-//            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-//        }
-//    }
-
-
 }
 

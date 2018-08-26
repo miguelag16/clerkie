@@ -54,12 +54,12 @@
     <include
         android:id="@+id/include_register_form"
         layout="@layout/register_layout"
+        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="270dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="48dp"
-        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -67,7 +67,7 @@
 
 
     <ImageView
-        android:id="@+id/circle"
+        android:id="@+id/reveal_circle"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginBottom="8dp"
@@ -75,7 +75,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/circle"
-        android:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.974"
