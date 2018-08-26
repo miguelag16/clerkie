@@ -1,36 +1,22 @@
 package clerkie.clerkie_android_coding_challenge;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -39,11 +25,6 @@ import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.Manifest.permission.READ_CONTACTS;
 
 /**
  * A login screen that offers login via email/password.
@@ -132,8 +113,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private EditText mPasswordField;
     private EditText mPasswordCheckField;
 
+    // Register box UI references
+    private View mRegisterLL;
+    private ImageView mRegisterUserImage;
+    private TextInputLayout mRegisterUserInput;
+    private EditText mRegisterUser;
+    private ImageView mRegisterPasswordImage;
+    private TextInputLayout mRegisterPasswordInput;
+    private EditText mRegisterPassword;
+    private Button mRegisterButton;
+
     private View mProgressView;
-    private View mLoginFormView;
 
     private View mTransparentLinearLayout;
 
@@ -148,18 +138,28 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Fields
         mEmailField = (EditText) findViewById(R.id.email);
         mPasswordField = (EditText) findViewById(R.id.password);
-        mPasswordCheckField = (EditText) findViewById(R.id.password_check);
+//        mPasswordCheckField = (EditText) findViewById(R.id.password_check);
 
 
         // Click listeners
         findViewById(R.id.button_sign_in).setOnClickListener(this);
-        findViewById(R.id.button_register).setOnClickListener(this);
+        findViewById(R.id.register_button).setOnClickListener(this);
         findViewById(R.id.circle).setOnClickListener(this);
 
+        // Set register UI views
+        mRegisterLL = findViewById(R.id.register_linear_layout);
+        mRegisterUserImage = findViewById(R.id.register_username_image);
+        mRegisterUserInput = findViewById(R.id.register_username_input);
+        mRegisterUser = findViewById(R.id.register_username);
+        mRegisterPasswordImage = findViewById(R.id.register_password_image);
+        mRegisterPasswordInput = findViewById(R.id.register_password_input);
+        mRegisterPassword = findViewById(R.id.register_password);
+        mRegisterButton = findViewById(R.id.register_button);
+
+
         // Views
-        mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-        mTransparentLinearLayout = findViewById(R.id.transparent_linear_layout);
+        mTransparentLinearLayout = findViewById(R.id.login_linear_layout);
     }
 
     private void createNewAccount() {
@@ -229,7 +229,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         int i = v.getId();
 
         if (i == R.id.button_sign_in) {
-        } else if (i == R.id.button_register) {
+        } else if (i == R.id.register_button) {
             createNewAccount();
         } else if (i == R.id.circle){
 //            if(mTransparentLinearLayout.getVisibility() == View.VISIBLE) mTransparentLinearLayout.setVisibility(View.GONE);
@@ -276,14 +276,51 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             });
             animHeight.setDuration(1000);
 
-
-
             animHeight.start();
             animWidth.start();
 
-//            Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
-//                    mTransparentLinearLayout, mTransparentLinearLayout.getWidth()/2, 0, 0, mTransparentLinearLayout.getWidth()/2);
-//            revealAnimator.start();
+
+
+
+
+
+            Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
+                    mRegisterLL,
+                    mRegisterLL.getWidth()/2,
+                    mRegisterLL.getHeight()/2,
+                    0,
+                    mRegisterLL.getWidth()/2);
+
+            revealAnimator.setDuration(1000);
+
+            revealAnimator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    mRegisterLL.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mRegisterUserImage.setVisibility(View.VISIBLE);
+                    mRegisterUserInput.setVisibility(View.VISIBLE);
+                    mRegisterUser.setVisibility(View.VISIBLE);
+                    mRegisterPasswordImage.setVisibility(View.VISIBLE);
+                    mRegisterPasswordInput.setVisibility(View.VISIBLE);
+                    mRegisterPassword.setVisibility(View.VISIBLE);
+                    mRegisterButton.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+            revealAnimator.start();
         }
     }
 
@@ -368,41 +405,41 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         return password.length() > 4;
     }
 
-    /**
-     * Shows the progress UI and hides the login form.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
-
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
-    }
+//    /**
+//     * Shows the progress UI and hides the login form.
+//     */
+//    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+//    private void showProgress(final boolean show) {
+//        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+//        // for very easy animations. If available, use these APIs to fade-in
+//        // the progress spinner.
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+//            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+//
+//            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+//            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+//                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+//                }
+//            });
+//
+//            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+//            mProgressView.animate().setDuration(shortAnimTime).alpha(
+//                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+//                }
+//            });
+//        } else {
+//            // The ViewPropertyAnimator APIs are not available, so simply show
+//            // and hide the relevant UI components.
+//            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+//            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+//        }
+//    }
 
 
 }
