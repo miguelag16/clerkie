@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/register_layout_root"
     android:layout_width="match_parent"
     android:layout_height="270dp"
-    android:background="@drawable/oval_blue1"
-    tools:layout_editor_absoluteY="81dp">
+    android:background="@drawable/oval_blue1">
 
     <Button
         android:id="@+id/register_button"
