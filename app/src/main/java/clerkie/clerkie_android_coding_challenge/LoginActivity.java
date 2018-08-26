@@ -1,9 +1,7 @@
 package clerkie.clerkie_android_coding_challenge;
 
 import android.animation.Animator;
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
@@ -14,9 +12,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -31,7 +26,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * A login screen that offers login via email/password.
@@ -124,13 +118,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     // Register box UI references
     private View mRegisterForm;
+    private View mRegisterLayout;
+    private Button mRegisterButton;
+    private View mRegisterSwitch;
     private ImageView mRegisterUserImage;
     private TextInputLayout mRegisterUserInput;
     private EditText mRegisterUser;
     private ImageView mRegisterPasswordImage;
     private TextInputLayout mRegisterPasswordInput;
     private EditText mRegisterPassword;
-    private Button mRegisterButton;
+    private ImageView mRegisterPasswordImage2;
+    private TextInputLayout mRegisterPasswordInput2;
+    private EditText mRegisterPassword2;
 
     private View mProgressView;
 
@@ -154,16 +153,36 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         findViewById(R.id.button_sign_in).setOnClickListener(this);
         findViewById(R.id.register_button).setOnClickListener(this);
         findViewById(R.id.reveal_circle).setOnClickListener(this);
+        findViewById(R.id.x_in_circle).setOnClickListener(this);
+
+        // Set login UI views
+//        mRegisterForm = findViewById(R.id.include_register_form);
+//        mRegisterLayout = findViewById(R.id.register_layout_root);
+//        mRegisterButton = findViewById(R.id.register_button);
+//        mRegisterSwitch = findViewById(R.id.register_switch);
+//        mRegisterUserImage = findViewById(R.id.register_username_image);
+//        mRegisterUserInput = findViewById(R.id.register_username_input);
+//        mRegisterUser = findViewById(R.id.register_username);
+//        mRegisterPasswordImage = findViewById(R.id.register_password_image);
+//        mRegisterPasswordInput = findViewById(R.id.register_password_input);
+//        mRegisterPassword = findViewById(R.id.login_password);
 
         // Set register UI views
         mRegisterForm = findViewById(R.id.include_register_form);
+        mRegisterLayout = findViewById(R.id.register_layout_root);
+        mRegisterButton = findViewById(R.id.register_button);
+        mRegisterSwitch = findViewById(R.id.register_switch);
         mRegisterUserImage = findViewById(R.id.register_username_image);
         mRegisterUserInput = findViewById(R.id.register_username_input);
         mRegisterUser = findViewById(R.id.register_username);
-        mRegisterPasswordImage = findViewById(R.id.register_password_image2);
-        mRegisterPasswordInput = findViewById(R.id.register_password_input2);
-        mRegisterPassword = findViewById(R.id.register_password2);
-        mRegisterButton = findViewById(R.id.register_button);
+        mRegisterPasswordImage = findViewById(R.id.register_password_image);
+        mRegisterPasswordInput = findViewById(R.id.register_password_input);
+        mRegisterPassword = findViewById(R.id.register_password);
+        mRegisterPasswordImage2 = findViewById(R.id.register_password_image2);
+        mRegisterPasswordInput2 = findViewById(R.id.register_password_input2);
+        mRegisterPassword2 = findViewById(R.id.register_password2);
+
+
 
 
         // Views
@@ -235,6 +254,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 });
     }
 
+
+    private ArrayList<ObjectAnimator> buttonToCornerAnimations;
+    private ArrayList<ObjectAnimator> buttonToCenterAnimations;
     @Override
     public void onClick(View v) {
         int i = v.getId();
@@ -242,31 +264,76 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (i == R.id.button_sign_in) {
         } else if (i == R.id.register_button) {
 //            createNewAccount();
-            for(ObjectAnimator o : reverseTest) o.reverse();
-        } else if (i == R.id.reveal_circle) {
+//            for(ObjectAnimator o : reverseTest) o.reverse();
+        } else if (i == R.id.x_in_circle) {
             if(mRegisterForm.getVisibility() == View.INVISIBLE) {
-                animations = new ArrayList<>();
+                buttonToCornerAnimations = new ArrayList<>();
+                buttonToCenterAnimations = new ArrayList<>();
                 runForwardAnimations();
             }
-            else ;
+            else runBackwardAnimations();
 
         }
     }
 
-    private ArrayList<ObjectAnimator> animations;
-//
-//    private ArrayList<ObjectAnimator> getCircleAnimations(){
-//
-//    }
-
     private void runForwardAnimations(){
+        ArrayList<ObjectAnimator> circleToCenterAnimations = getCircleToCenterAnimations();
+        ArrayList<ObjectAnimator> loginToBackAnimations = getLoginToBackAnimations();
+
+        final float cornerX = mXinCircle.getX();
+        final float cornerY = mXinCircle.getY();
+
+        buttonToCenterAnimations.addAll(circleToCenterAnimations);
+        buttonToCenterAnimations.addAll(loginToBackAnimations);
+
+        for(ObjectAnimator objectAnimator: buttonToCenterAnimations) objectAnimator.start();
+
+        ArrayList<ObjectAnimator> xToCornerAnimations = getXtoCornerAnimations(cornerX, cornerY);
+        buttonToCornerAnimations.addAll(xToCornerAnimations);
+
+        revealForward(xToCornerAnimations);
+    }
+
+    private void runBackwardAnimations(){
+        for(ObjectAnimator objectAnimator : buttonToCornerAnimations) objectAnimator.reverse();
+        revealBackward();
+    }
+
+    private ArrayList<ObjectAnimator> getCircleToCenterAnimations(){
+        ArrayList<ObjectAnimator> arr = new ArrayList<>();
+
         ObjectAnimator animationCircleX = ObjectAnimator.ofFloat(mRevealCircle, "x",
                 mTransparentLinearLayout.getX()+(mTransparentLinearLayout.getWidth()-mRevealCircle.getWidth())/2);
         animationCircleX.setDuration(500);
 
+//        animationCircleX.addListener(new Animator.AnimatorListener() {
+//            @Override
+//            public void onAnimationStart(Animator animation) {
+//
+//            }
+//
+//            @Override
+//            public void onAnimationEnd(Animator animation) {
+//                mRevealCircle.setVisibility(View.INVISIBLE);
+//            }
+//
+//            @Override
+//            public void onAnimationCancel(Animator animation) {
+//
+//            }
+//
+//            @Override
+//            public void onAnimationRepeat(Animator animation) {
+//
+//            }
+//        });
+
         ObjectAnimator animationCircleY = ObjectAnimator.ofFloat(mRevealCircle, "y",
                 mTransparentLinearLayout.getY()+(mTransparentLinearLayout.getHeight()-mRevealCircle.getHeight())/2);
         animationCircleY.setDuration(500);
+
+        ObjectAnimator animationCircleAlpha = ObjectAnimator.ofFloat(mRevealCircle, "alpha", 0);
+        animationCircleAlpha.setDuration(500);
 
         ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x",
                 mTransparentLinearLayout.getX()+(mTransparentLinearLayout.getWidth()-mXinCircle.getMeasuredWidth())/2);
@@ -276,8 +343,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 mTransparentLinearLayout.getY()+(mTransparentLinearLayout.getHeight()-mXinCircle.getMeasuredHeight())/2);
         animationXinCircleY.setDuration(500);
 
+        arr.add(animationCircleX);
+        arr.add(animationCircleY);
+        arr.add(animationCircleAlpha);
+        arr.add(animationXinCircleX);
+        arr.add(animationXinCircleY);
 
+        return arr;
+    }
 
+    private ArrayList<ObjectAnimator> getLoginToBackAnimations(){
+        ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
         ObjectAnimator animationY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "y",
                 mTransparentLinearLayout.getY()-35);
@@ -293,46 +369,34 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         ObjectAnimator animationScaleY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "scaleY", 0.95f);
         animationScaleY.setDuration(1000);
 
-        animationCircleX.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
+        arr.add(animationY);
+        arr.add(animationAlpha);
+        arr.add(animationScaleX);
+        arr.add(animationScaleY);
 
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mRevealCircle.setVisibility(View.INVISIBLE);
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-
-        final float returnX = mXinCircle.getX();
-        final float returnY = mXinCircle.getY();
-
-        animationCircleX.start();
-        animationCircleY.start();
-        animationXinCircleX.start();
-        animationXinCircleY.start();
-
-        animationY.start();
-        animationAlpha.start();
-        animationScaleX.start();
-        animationScaleY.start();
-
-        displayRegisterForm(returnX, returnY);
+        return arr;
     }
 
+    private ArrayList<ObjectAnimator> getXtoCornerAnimations(float x, float y){
+        ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
-    private void displayRegisterForm(final float x, final float y){
+        ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x", x);
+        animationXinCircleX.setDuration(500);
+
+        ObjectAnimator animationXinCircleY = ObjectAnimator.ofFloat(mXinCircle, "y", y);
+        animationXinCircleY.setDuration(500);
+
+        ObjectAnimator animationXinCircleRotation = ObjectAnimator.ofFloat(mXinCircle, "rotation", 45);
+        animationXinCircleRotation.setDuration(500);
+
+        arr.add(animationXinCircleX);
+        arr.add(animationXinCircleY);
+        arr.add(animationXinCircleRotation);
+
+        return arr;
+    }
+
+    private void revealForward(final ArrayList<ObjectAnimator> xToCornerAnimations){
             Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
                     mRegisterForm,
                     mRegisterForm.getWidth()/2,
@@ -347,11 +411,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 @Override
                 public void onAnimationStart(Animator animation) {
                     mRegisterForm.setVisibility(View.VISIBLE);
+                    setRegisterFieldVisibilities(false);
                 }
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animationXinCircleForward(x, y);
+                    mRegisterButton.setVisibility(View.VISIBLE);
+                    setRegisterFieldVisibilities(true);
+                    for(ObjectAnimator objectAnimator : xToCornerAnimations) objectAnimator.start();
                 }
 
                 @Override
@@ -365,32 +432,56 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 }
             });
             revealAnimator.start();
-
-
     }
 
+    private void revealBackward(){
+        Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
+                mRegisterForm,
+                mRegisterForm.getWidth()/2,
+                mRegisterForm.getHeight()/2,
+                mRegisterForm.getWidth()/2,
+                mRevealCircle.getWidth()/2);
 
-    private ArrayList<ObjectAnimator> reverseTest = new ArrayList<ObjectAnimator>();
+        revealAnimator.setStartDelay(500);
+        revealAnimator.setDuration(1000);
 
-    private void animationXinCircleForward(float x, float y){
-        ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x", x);
-        animationXinCircleX.setDuration(500);
+        revealAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                setRegisterFieldVisibilities(false);
+            }
 
-        ObjectAnimator animationXinCircleY = ObjectAnimator.ofFloat(mXinCircle, "y", y);
-        animationXinCircleY.setDuration(500);
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mRegisterForm.setVisibility(View.INVISIBLE);
+                for(ObjectAnimator objectAnimator : buttonToCenterAnimations) objectAnimator.reverse();
+            }
 
-        ObjectAnimator animationXinCircleRotation = ObjectAnimator.ofFloat(mXinCircle, "rotation", 45);
-        animationXinCircleRotation.setDuration(500);
+            @Override
+            public void onAnimationCancel(Animator animation) {
 
-        reverseTest.add(animationXinCircleX);
-        reverseTest.add(animationXinCircleY);
-        reverseTest.add(animationXinCircleRotation);
+            }
 
-        animationXinCircleX.start();
-        animationXinCircleY.start();
-        animationXinCircleRotation.start();
+            @Override
+            public void onAnimationRepeat(Animator animation) {
 
-//        animationXinCircleX.reverse();
+            }
+        });
+        revealAnimator.start();
+    }
+
+    private void setRegisterFieldVisibilities(boolean bool){
+        mRegisterButton.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterSwitch.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUserImage.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUserInput.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUser.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordImage.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordInput.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPassword.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordImage2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordInput2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPassword2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
     }
 }
 
