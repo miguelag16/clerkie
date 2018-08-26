@@ -6,6 +6,11 @@
     <string name="prompt_password">Password (optional)</string>
     <string name="action_register">Register</string>
     <string name="action_sign_in">Sign in</string>
+    <string name="action_forgot_password">Forgot password?</string>
+    <string name="switch_on"> Email </string>
+    <string name="switch_off"> Phone </string>
+
+
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>

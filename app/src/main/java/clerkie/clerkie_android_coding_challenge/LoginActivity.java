@@ -151,9 +151,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterUserImage = findViewById(R.id.register_username_image);
         mRegisterUserInput = findViewById(R.id.register_username_input);
         mRegisterUser = findViewById(R.id.register_username);
-        mRegisterPasswordImage = findViewById(R.id.register_password_image);
-        mRegisterPasswordInput = findViewById(R.id.register_password_input);
-        mRegisterPassword = findViewById(R.id.register_password);
+        mRegisterPasswordImage = findViewById(R.id.register_password_image2);
+        mRegisterPasswordInput = findViewById(R.id.register_password_input2);
+        mRegisterPassword = findViewById(R.id.register_password2);
         mRegisterButton = findViewById(R.id.register_button);
 
 
