@@ -261,6 +261,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
+    private boolean reveal_forward;
     private ArrayList<ObjectAnimator> buttonToCornerAnimations = new ArrayList<>();
     private ArrayList<ObjectAnimator> buttonToCenterAnimations = new ArrayList<>();
     @Override
@@ -271,12 +272,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         } else if (i == R.id.register_button) {
 //            createNewAccount();
         } else if (i == R.id.x_in_circle) {
+
             if(mRegisterForm.getVisibility() == View.INVISIBLE) {
+                reveal_forward = true;
                 buttonToCornerAnimations.clear();
                 buttonToCenterAnimations.clear();
                 runForwardAnimations();
             }
-            else runBackwardAnimations();
+            else {
+                reveal_forward = false;
+                runBackwardAnimations();
+            }
 
         }
     }
@@ -311,34 +317,34 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 mLoginForm.getX()+(mLoginForm.getWidth()-mRevealCircle.getWidth())/2);
         animationCircleX.setDuration(500);
 
-//        animationCircleX.addListener(new Animator.AnimatorListener() {
-//            @Override
-//            public void onAnimationStart(Animator animation) {
-//
-//            }
-//
-//            @Override
-//            public void onAnimationEnd(Animator animation) {
-//                mRevealCircle.setVisibility(View.INVISIBLE);
-//            }
-//
-//            @Override
-//            public void onAnimationCancel(Animator animation) {
-//
-//            }
-//
-//            @Override
-//            public void onAnimationRepeat(Animator animation) {
-//
-//            }
-//        });
+        animationCircleX.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mRevealCircle.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if(reveal_forward) mRevealCircle.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
 
         ObjectAnimator animationCircleY = ObjectAnimator.ofFloat(mRevealCircle, "y",
                 mLoginForm.getY()+(mLoginForm.getHeight()-mRevealCircle.getHeight())/2);
         animationCircleY.setDuration(500);
 
-        ObjectAnimator animationCircleAlpha = ObjectAnimator.ofFloat(mRevealCircle, "alpha", 0);
-        animationCircleAlpha.setDuration(500);
+//        ObjectAnimator animationCircleAlpha = ObjectAnimator.ofFloat(mRevealCircle, "alpha", 0);
+//        animationCircleAlpha.setDuration(500);
 
         ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x",
                 mLoginForm.getX()+(mLoginForm.getWidth()-mXinCircle.getMeasuredWidth())/2);
@@ -350,7 +356,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         arr.add(animationCircleX);
         arr.add(animationCircleY);
-        arr.add(animationCircleAlpha);
+//        arr.add(animationCircleAlpha);
         arr.add(animationXinCircleX);
         arr.add(animationXinCircleY);
 
