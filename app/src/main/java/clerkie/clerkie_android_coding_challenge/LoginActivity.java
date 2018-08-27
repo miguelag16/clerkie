@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
+import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +20,7 @@ import android.view.ViewAnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -99,7 +102,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private View mLoginForm;
     private View mLoginLayout;
     private Button mLoginButton;
-    private View mLoginSwitch;
     private ImageView mLoginUserImage;
     private TextInputLayout mLoginUserInput;
     private EditText mLoginUser;
@@ -112,8 +114,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private View mRegisterForm;
     private View mRegisterLayout;
     private TextView mRegisterMessageBox;
-    private Button mRegisterButton;
     private View mRegisterSwitch;
+    private Button mRegisterButton;
     private ImageView mRegisterUserImage;
     private TextInputLayout mRegisterUserInput;
     private EditText mRegisterUser;
@@ -144,7 +146,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mLoginForm = findViewById(R.id.include_login_form);
         mLoginLayout = findViewById(R.id.login_layout_root);
         mLoginButton = findViewById(R.id.login_button);
-        mLoginSwitch = findViewById(R.id.login_switch);
         mLoginUserImage = findViewById(R.id.login_username_image);
         mLoginUserInput = findViewById(R.id.login_username_input);
         mLoginUser = findViewById(R.id.login_username);
@@ -157,8 +158,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterForm = findViewById(R.id.include_register_form);
         mRegisterLayout = findViewById(R.id.register_layout_root);
         mRegisterMessageBox = findViewById(R.id.register_message_box);
-        mRegisterButton = findViewById(R.id.register_button);
         mRegisterSwitch = findViewById(R.id.register_switch);
+        mRegisterButton = findViewById(R.id.register_button);
         mRegisterUserImage = findViewById(R.id.register_username_image);
         mRegisterUserInput = findViewById(R.id.register_username_input);
         mRegisterUser = findViewById(R.id.register_username);
@@ -175,7 +176,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mXinCircle = findViewById(R.id.x_in_circle);
 
         // Click listeners
-//        findViewById(R.id.login_button).setOnClickListener(this);
         mRegisterButton.setOnClickListener(this);
         mRevealCircle.setOnClickListener(this);
         mXinCircle.setOnClickListener(this);
@@ -508,6 +508,33 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterPassword2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
     }
 
+    private void displayRegisterForm(){
+        reveal_forward = true;
+        buttonToCornerAnimations.clear();
+        buttonToCenterAnimations.clear();
+        runForwardAnimations();
+    }
+
+    private void hideRegisterForm(){
+        reveal_forward = false;
+        runBackwardAnimations();
+    }
+
+    public void switchOnClick(View view){
+        if (mRegisterForm.getVisibility() == View.VISIBLE){
+            if(mRegisterUser.getInputType() != (InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE)) {
+                mRegisterUser.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE);
+            } else {
+                mRegisterUser.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS);
+            }
+        } else {
+            if(mLoginUser.getInputType() != (InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE)) {
+                mLoginUser.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE);
+            } else {
+                mLoginUser.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS);
+            }
+        }
+    }
 
     @Override
     public void onClick(View v) {
@@ -517,19 +544,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         } else if (i == R.id.register_button) {
             registerNewUser();
         } else if (i == R.id.x_in_circle) {
-
-            if(mRegisterForm.getVisibility() == View.INVISIBLE) {
-                reveal_forward = true;
-                buttonToCornerAnimations.clear();
-                buttonToCenterAnimations.clear();
-                runForwardAnimations();
+            if (mRegisterForm.getVisibility() == View.INVISIBLE) {
+                displayRegisterForm();
+            } else {
+                hideRegisterForm();
             }
-            else {
-                reveal_forward = false;
-                runBackwardAnimations();
-            }
-
         }
     }
+
 }
 

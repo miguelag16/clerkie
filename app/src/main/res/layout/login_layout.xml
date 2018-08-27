@@ -60,7 +60,7 @@
             android:imeActionId="6"
             android:imeActionLabel="@string/action_sign_in"
             android:imeOptions="actionUnspecified"
-            android:inputType="textEmailAddress"
+            android:inputType="textWebEmailAddress"
             android:maxLines="1"
             android:singleLine="true" />
 
