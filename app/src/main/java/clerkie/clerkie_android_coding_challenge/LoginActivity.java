@@ -116,6 +116,19 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private View mRevealCircle;
     private TextView mXinCircle;
 
+    // Login box UI references
+    private View mLoginForm;
+    private View mLoginLayout;
+    private Button mLoginButton;
+    private View mLoginSwitch;
+    private ImageView mLoginUserImage;
+    private TextInputLayout mLoginUserInput;
+    private EditText mLoginUser;
+    private ImageView mLoginPasswordImage;
+    private TextInputLayout mLoginPasswordInput;
+    private EditText mLoginPassword;
+    private TextView mLoginForgotPassword;
+
     // Register box UI references
     private View mRegisterForm;
     private View mRegisterLayout;
@@ -133,7 +146,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private View mProgressView;
 
-    private View mTransparentLinearLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,28 +156,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mAuth = FirebaseAuth.getInstance();
 
         // Fields
-        mEmailField = (EditText) findViewById(R.id.email);
-        mPasswordField = (EditText) findViewById(R.id.password);
+        mEmailField = (EditText) findViewById(R.id.login_username);
+        mPasswordField = (EditText) findViewById(R.id.login_password);
 //        mPasswordCheckField = (EditText) findViewById(R.id.password_check);
 
 
         // Click listeners
-        findViewById(R.id.button_sign_in).setOnClickListener(this);
+        findViewById(R.id.login_button).setOnClickListener(this);
         findViewById(R.id.register_button).setOnClickListener(this);
         findViewById(R.id.reveal_circle).setOnClickListener(this);
         findViewById(R.id.x_in_circle).setOnClickListener(this);
 
         // Set login UI views
-//        mRegisterForm = findViewById(R.id.include_register_form);
-//        mRegisterLayout = findViewById(R.id.register_layout_root);
-//        mRegisterButton = findViewById(R.id.register_button);
-//        mRegisterSwitch = findViewById(R.id.register_switch);
-//        mRegisterUserImage = findViewById(R.id.register_username_image);
-//        mRegisterUserInput = findViewById(R.id.register_username_input);
-//        mRegisterUser = findViewById(R.id.register_username);
-//        mRegisterPasswordImage = findViewById(R.id.register_password_image);
-//        mRegisterPasswordInput = findViewById(R.id.register_password_input);
-//        mRegisterPassword = findViewById(R.id.login_password);
+        mLoginForm = findViewById(R.id.include_login_form);
+        mLoginLayout = findViewById(R.id.login_layout_root);
+        mLoginButton = findViewById(R.id.login_button);
+        mLoginSwitch = findViewById(R.id.login_switch);
+        mLoginUserImage = findViewById(R.id.login_username_image);
+        mLoginUserInput = findViewById(R.id.login_username_input);
+        mLoginUser = findViewById(R.id.login_username);
+        mLoginPasswordImage = findViewById(R.id.login_password_image);
+        mLoginPasswordInput = findViewById(R.id.login_password_input);
+        mLoginPassword = findViewById(R.id.login_password);
+        mLoginForgotPassword = findViewById(R.id.login_forgot_password);
 
         // Set register UI views
         mRegisterForm = findViewById(R.id.include_register_form);
@@ -182,14 +195,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterPasswordInput2 = findViewById(R.id.register_password_input2);
         mRegisterPassword2 = findViewById(R.id.register_password2);
 
-
-
-
         // Views
         mProgressView = findViewById(R.id.login_progress);
         mRevealCircle = findViewById(R.id.reveal_circle);
         mXinCircle = findViewById(R.id.x_in_circle);
-        mTransparentLinearLayout = findViewById(R.id.include_login_form);
     }
 
     private void createNewAccount() {
@@ -199,10 +208,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
 
         verifyNewUser();
-
 //        showProgressDialog();
-
-
     }
 
     private boolean validateForm() {
@@ -255,20 +261,19 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-    private ArrayList<ObjectAnimator> buttonToCornerAnimations;
-    private ArrayList<ObjectAnimator> buttonToCenterAnimations;
+    private ArrayList<ObjectAnimator> buttonToCornerAnimations = new ArrayList<>();
+    private ArrayList<ObjectAnimator> buttonToCenterAnimations = new ArrayList<>();
     @Override
     public void onClick(View v) {
         int i = v.getId();
 
-        if (i == R.id.button_sign_in) {
+        if (i == R.id.login_button) {
         } else if (i == R.id.register_button) {
 //            createNewAccount();
-//            for(ObjectAnimator o : reverseTest) o.reverse();
         } else if (i == R.id.x_in_circle) {
             if(mRegisterForm.getVisibility() == View.INVISIBLE) {
-                buttonToCornerAnimations = new ArrayList<>();
-                buttonToCenterAnimations = new ArrayList<>();
+                buttonToCornerAnimations.clear();
+                buttonToCenterAnimations.clear();
                 runForwardAnimations();
             }
             else runBackwardAnimations();
@@ -303,7 +308,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
         ObjectAnimator animationCircleX = ObjectAnimator.ofFloat(mRevealCircle, "x",
-                mTransparentLinearLayout.getX()+(mTransparentLinearLayout.getWidth()-mRevealCircle.getWidth())/2);
+                mLoginForm.getX()+(mLoginForm.getWidth()-mRevealCircle.getWidth())/2);
         animationCircleX.setDuration(500);
 
 //        animationCircleX.addListener(new Animator.AnimatorListener() {
@@ -329,18 +334,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //        });
 
         ObjectAnimator animationCircleY = ObjectAnimator.ofFloat(mRevealCircle, "y",
-                mTransparentLinearLayout.getY()+(mTransparentLinearLayout.getHeight()-mRevealCircle.getHeight())/2);
+                mLoginForm.getY()+(mLoginForm.getHeight()-mRevealCircle.getHeight())/2);
         animationCircleY.setDuration(500);
 
         ObjectAnimator animationCircleAlpha = ObjectAnimator.ofFloat(mRevealCircle, "alpha", 0);
         animationCircleAlpha.setDuration(500);
 
         ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x",
-                mTransparentLinearLayout.getX()+(mTransparentLinearLayout.getWidth()-mXinCircle.getMeasuredWidth())/2);
+                mLoginForm.getX()+(mLoginForm.getWidth()-mXinCircle.getMeasuredWidth())/2);
         animationXinCircleX.setDuration(500);
 
         ObjectAnimator animationXinCircleY = ObjectAnimator.ofFloat(mXinCircle, "y",
-                mTransparentLinearLayout.getY()+(mTransparentLinearLayout.getHeight()-mXinCircle.getMeasuredHeight())/2);
+                mLoginForm.getY()+(mLoginForm.getHeight()-mXinCircle.getMeasuredHeight())/2);
         animationXinCircleY.setDuration(500);
 
         arr.add(animationCircleX);
@@ -355,18 +360,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private ArrayList<ObjectAnimator> getLoginToBackAnimations(){
         ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
-        ObjectAnimator animationY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "y",
-                mTransparentLinearLayout.getY()-35);
+        ObjectAnimator animationY = ObjectAnimator.ofFloat(mLoginForm, "y",
+                mLoginForm.getY()-35);
         animationY.setDuration(1000);
 
-        ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mTransparentLinearLayout, "alpha",
-                mTransparentLinearLayout.getAlpha()/2);
+        ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mLoginForm, "alpha",
+                mLoginForm.getAlpha()/2);
         animationAlpha.setDuration(1000);
 
-        ObjectAnimator animationScaleX = ObjectAnimator.ofFloat(mTransparentLinearLayout, "scaleX", 0.95f);
+        ObjectAnimator animationScaleX = ObjectAnimator.ofFloat(mLoginForm, "scaleX", 0.95f);
         animationScaleX.setDuration(1000);
 
-        ObjectAnimator animationScaleY = ObjectAnimator.ofFloat(mTransparentLinearLayout, "scaleY", 0.95f);
+        ObjectAnimator animationScaleY = ObjectAnimator.ofFloat(mLoginForm, "scaleY", 0.95f);
         animationScaleY.setDuration(1000);
 
         arr.add(animationY);
