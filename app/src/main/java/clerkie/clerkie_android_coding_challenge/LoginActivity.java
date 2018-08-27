@@ -2,7 +2,10 @@ package clerkie.clerkie_android_coding_challenge;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -23,7 +26,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 
 import java.util.ArrayList;
 
@@ -35,7 +42,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     private final String TAG = "LoginActivity";
     private FirebaseAuth mAuth;
-
+    private DatabaseReference mUserDatabaseReference;
 
     @Override
     protected void onStart() {
@@ -47,11 +54,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (intent.getData() == null) return;
         String emailLink = intent.getData().toString();
 
-// Confirm the link is a sign-in with email link.
+        // Confirm the link is a sign-in with email link.
         if (mAuth.isSignInWithEmailLink(emailLink)) {
-            String email; // retrieve this from wherever you stored it
+
+            SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+            String email = sharedPref.getString("registration_user_field", "");
             // The client SDK will parse the code from the link for you.
-            mAuth.signInWithEmailLink("miguel16@stanford.edu", emailLink)
+            mAuth.signInWithEmailLink(email, emailLink)
                     .addOnCompleteListener(new OnCompleteListener() {
                         @Override
                         public void onComplete(@NonNull Task task) {
@@ -79,36 +88,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //        updateUI(currentUser);
     }
 
-//    // [START create_user_with_email]
-//        mAuth.createUserWithEmailAndPassword(email, password)
-//            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-//        @Override
-//        public void onComplete(@NonNull Task<AuthResult> task) {
-//            if (task.isSuccessful()) {
-//                // Sign in success, update UI with the signed-in user's information
-//                Log.d(TAG, "createUserWithEmail:success");
-//                FirebaseUser user = mAuth.getCurrentUser();
-////                            updateUI(user);
-//            } else {
-//                // If sign in fails, display a message to the user.
-//                Log.w(TAG, "createUserWithEmail:failure", task.getException());
-//                Toast.makeText(LoginActivity.this, "Authentication failed.",
-//                        Toast.LENGTH_SHORT).show();
-////                            updateUI(null);
-//            }
-//
-//            // [START_EXCLUDE]
-////                        hideProgressDialog();
-//            // [END_EXCLUDE]
-//        }
-//    });
-//    // [END create_user_with_email]
-
-
-
-
-
-
     // UI references.
     private EditText mEmailField;
     private EditText mPasswordField;
@@ -132,6 +111,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     // Register box UI references
     private View mRegisterForm;
     private View mRegisterLayout;
+    private TextView mRegisterMessageBox;
     private Button mRegisterButton;
     private View mRegisterSwitch;
     private ImageView mRegisterUserImage;
@@ -158,14 +138,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Fields
         mEmailField = (EditText) findViewById(R.id.login_username);
         mPasswordField = (EditText) findViewById(R.id.login_password);
-//        mPasswordCheckField = (EditText) findViewById(R.id.password_check);
 
-
-        // Click listeners
-        findViewById(R.id.login_button).setOnClickListener(this);
-        findViewById(R.id.register_button).setOnClickListener(this);
-        findViewById(R.id.reveal_circle).setOnClickListener(this);
-        findViewById(R.id.x_in_circle).setOnClickListener(this);
 
         // Set login UI views
         mLoginForm = findViewById(R.id.include_login_form);
@@ -183,6 +156,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Set register UI views
         mRegisterForm = findViewById(R.id.include_register_form);
         mRegisterLayout = findViewById(R.id.register_layout_root);
+        mRegisterMessageBox = findViewById(R.id.register_message_box);
         mRegisterButton = findViewById(R.id.register_button);
         mRegisterSwitch = findViewById(R.id.register_switch);
         mRegisterUserImage = findViewById(R.id.register_username_image);
@@ -199,41 +173,92 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mProgressView = findViewById(R.id.login_progress);
         mRevealCircle = findViewById(R.id.reveal_circle);
         mXinCircle = findViewById(R.id.x_in_circle);
+
+        // Click listeners
+//        findViewById(R.id.login_button).setOnClickListener(this);
+        mRegisterButton.setOnClickListener(this);
+        mRevealCircle.setOnClickListener(this);
+        mXinCircle.setOnClickListener(this);
     }
 
-    private void createNewAccount() {
-        Log.d(TAG, "createAccount:" + mEmailField.getText().toString());
+    private void registerNewUser() {
+        Log.d(TAG, "createAccount:" + mRegisterUser.getText().toString());
         if (!validateForm()) {
             return;
         }
-
-        verifyNewUser();
+        createNewUserAccount();
 //        showProgressDialog();
     }
+
 
     private boolean validateForm() {
         boolean valid = true;
 
-        if (TextUtils.isEmpty(mEmailField.getText().toString())) {
-            mEmailField.setError("Required.");
+        if (TextUtils.isEmpty(mRegisterUser.getText().toString())) {
+            mRegisterUser.setError("Required.");
             valid = false;
         } else {
-            mEmailField.setError(null);
+            mRegisterUser.setError(null);
         }
 
-        if (TextUtils.isEmpty(mPasswordField.getText().toString())) {
-            mPasswordField.setError("Required.");
+        if (TextUtils.isEmpty(mRegisterPassword.getText().toString())) {
+            mRegisterPassword.setError("Required.");
             valid = false;
         } else {
-            mPasswordField.setError(null);
+            mRegisterPassword.setError(null);
+        }
+
+        if (TextUtils.isEmpty(mRegisterPassword2.getText().toString())) {
+            mRegisterPassword2.setError("Required.");
+            valid = false;
+        } else {
+            mRegisterPassword2.setError(null);
         }
 
         // Handle passwords not being the same while registering process
+        if (!mRegisterPassword.getText().toString().equals(mRegisterPassword2.getText().toString())) {
+            mRegisterPassword2.setError("Passwords must match.");
+            valid = false;
+        } else {
+            mRegisterPassword2.setError(null);
+        }
 
         return valid;
     }
 
-    private void verifyNewUser() {
+    private void createNewUserAccount(){
+        mAuth.createUserWithEmailAndPassword(mRegisterUser.getText().toString(), mRegisterPassword.getText().toString())
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "createUserWithEmail: success");
+                            sendVerificationEmailToUser();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "createUserWithEmail: failure", task.getException());
+                            try {
+                                throw task.getException();
+                            } catch(FirebaseAuthWeakPasswordException e) {
+                                mRegisterMessageBox.setText(R.string.registration_failure_weak_password);
+                                showMessageInRegistrationBox();
+                            } catch(FirebaseAuthInvalidCredentialsException e) {
+                                mRegisterMessageBox.setText(R.string.registration_failure_invalid_credentials);
+                                showMessageInRegistrationBox();
+                            } catch(FirebaseAuthUserCollisionException e) {
+                                mRegisterMessageBox.setText(R.string.registration_failure_account_collision);
+                                showMessageInRegistrationBox();
+                            } catch(Exception e) {
+                                Log.e(TAG, e.getMessage());
+                            }
+                        }
+                    }
+                });
+    }
+
+
+    private void sendVerificationEmailToUser() {
         ActionCodeSettings actionCodeSettings =
                 ActionCodeSettings.newBuilder()
                         // URL you want to redirect back to. The domain (www.example.com) for this
@@ -247,45 +272,49 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 "1"    /* minimumVersion */)
                         .build();
 
-        mAuth.sendSignInLinkToEmail("miguel16@stanford.edu", actionCodeSettings)
+        mAuth.sendSignInLinkToEmail(mRegisterUser.getText().toString(), actionCodeSettings)
                 .addOnCompleteListener(new OnCompleteListener() {
                     @Override
                     public void onComplete(@NonNull Task task) {
-                        if (task.isSuccessful()) {
-                            Log.d(TAG, "Verification mail sent successfully.");
-                        } else {
-                            Log.w(TAG, "Verification mail failed to send.");
-                        }
+                        onVerificationEmailSendAttempt(task.isSuccessful());
                     }
                 });
+    }
+
+    private void onVerificationEmailSendAttempt(boolean sent){
+        if (sent){
+            Log.d(TAG, "Verification mail sent successfully.");
+            mRegisterMessageBox.setText(R.string.registration_email_success);
+
+            SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+            sharedPref.edit().putString("registration_user_field", mRegisterUser.getText().toString()).apply();
+        } else {
+            Log.w(TAG, "Verification mail failed to send.");
+            mRegisterMessageBox.setText(R.string.registration_email_failure);
+        }
+
+        showMessageInRegistrationBox();
+    }
+
+
+    private void showMessageInRegistrationBox(){
+        mRegisterMessageBox.setVisibility(View.VISIBLE);
+        setRegisterFieldVisibilities(false);
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                // Actions to do after 5 seconds
+                mRegisterMessageBox.setVisibility(View.INVISIBLE);
+                runBackwardAnimations();
+            }
+        }, 10000);
     }
 
 
     private boolean reveal_forward;
     private ArrayList<ObjectAnimator> buttonToCornerAnimations = new ArrayList<>();
     private ArrayList<ObjectAnimator> buttonToCenterAnimations = new ArrayList<>();
-    @Override
-    public void onClick(View v) {
-        int i = v.getId();
-
-        if (i == R.id.login_button) {
-        } else if (i == R.id.register_button) {
-//            createNewAccount();
-        } else if (i == R.id.x_in_circle) {
-
-            if(mRegisterForm.getVisibility() == View.INVISIBLE) {
-                reveal_forward = true;
-                buttonToCornerAnimations.clear();
-                buttonToCenterAnimations.clear();
-                runForwardAnimations();
-            }
-            else {
-                reveal_forward = false;
-                runBackwardAnimations();
-            }
-
-        }
-    }
 
     private void runForwardAnimations(){
         ArrayList<ObjectAnimator> circleToCenterAnimations = getCircleToCenterAnimations();
@@ -305,18 +334,19 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         revealForward(xToCornerAnimations);
     }
 
+
     private void runBackwardAnimations(){
+        // Send the 'X' to the center first by reversing these animations
         for(ObjectAnimator objectAnimator : buttonToCornerAnimations) objectAnimator.reverse();
         revealBackward();
     }
+
 
     private ArrayList<ObjectAnimator> getCircleToCenterAnimations(){
         ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
         ObjectAnimator animationCircleX = ObjectAnimator.ofFloat(mRevealCircle, "x",
                 mLoginForm.getX()+(mLoginForm.getWidth()-mRevealCircle.getWidth())/2);
-        animationCircleX.setDuration(500);
-
         animationCircleX.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -325,7 +355,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if(reveal_forward) mRevealCircle.setVisibility(View.INVISIBLE);
+
             }
 
             @Override
@@ -341,44 +371,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         ObjectAnimator animationCircleY = ObjectAnimator.ofFloat(mRevealCircle, "y",
                 mLoginForm.getY()+(mLoginForm.getHeight()-mRevealCircle.getHeight())/2);
-        animationCircleY.setDuration(500);
-
-//        ObjectAnimator animationCircleAlpha = ObjectAnimator.ofFloat(mRevealCircle, "alpha", 0);
-//        animationCircleAlpha.setDuration(500);
-
         ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x",
                 mLoginForm.getX()+(mLoginForm.getWidth()-mXinCircle.getMeasuredWidth())/2);
-        animationXinCircleX.setDuration(500);
-
         ObjectAnimator animationXinCircleY = ObjectAnimator.ofFloat(mXinCircle, "y",
                 mLoginForm.getY()+(mLoginForm.getHeight()-mXinCircle.getMeasuredHeight())/2);
-        animationXinCircleY.setDuration(500);
 
         arr.add(animationCircleX);
         arr.add(animationCircleY);
-//        arr.add(animationCircleAlpha);
         arr.add(animationXinCircleX);
         arr.add(animationXinCircleY);
 
         return arr;
     }
 
+
     private ArrayList<ObjectAnimator> getLoginToBackAnimations(){
         ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
         ObjectAnimator animationY = ObjectAnimator.ofFloat(mLoginForm, "y",
                 mLoginForm.getY()-35);
-        animationY.setDuration(1000);
-
         ObjectAnimator animationAlpha = ObjectAnimator.ofFloat(mLoginForm, "alpha",
                 mLoginForm.getAlpha()/2);
-        animationAlpha.setDuration(1000);
-
         ObjectAnimator animationScaleX = ObjectAnimator.ofFloat(mLoginForm, "scaleX", 0.95f);
-        animationScaleX.setDuration(1000);
-
         ObjectAnimator animationScaleY = ObjectAnimator.ofFloat(mLoginForm, "scaleY", 0.95f);
-        animationScaleY.setDuration(1000);
 
         arr.add(animationY);
         arr.add(animationAlpha);
@@ -388,17 +403,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         return arr;
     }
 
+
     private ArrayList<ObjectAnimator> getXtoCornerAnimations(float x, float y){
         ArrayList<ObjectAnimator> arr = new ArrayList<>();
 
         ObjectAnimator animationXinCircleX = ObjectAnimator.ofFloat(mXinCircle, "x", x);
-        animationXinCircleX.setDuration(500);
-
         ObjectAnimator animationXinCircleY = ObjectAnimator.ofFloat(mXinCircle, "y", y);
-        animationXinCircleY.setDuration(500);
-
         ObjectAnimator animationXinCircleRotation = ObjectAnimator.ofFloat(mXinCircle, "rotation", 45);
-        animationXinCircleRotation.setDuration(500);
 
         arr.add(animationXinCircleX);
         arr.add(animationXinCircleY);
@@ -406,6 +417,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         return arr;
     }
+
 
     private void revealForward(final ArrayList<ObjectAnimator> xToCornerAnimations){
             Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
@@ -415,12 +427,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     mRevealCircle.getWidth()/2,
                     mRegisterForm.getWidth()/2);
 
-            revealAnimator.setStartDelay(500);
-            revealAnimator.setDuration(1000);
+            revealAnimator.setStartDelay(250);
 
             revealAnimator.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
+                    if(reveal_forward) mRevealCircle.setVisibility(View.INVISIBLE);
                     mRegisterForm.setVisibility(View.VISIBLE);
                     setRegisterFieldVisibilities(false);
                 }
@@ -445,6 +457,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             revealAnimator.start();
     }
 
+
     private void revealBackward(){
         Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
                 mRegisterForm,
@@ -453,8 +466,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 mRegisterForm.getWidth()/2,
                 mRevealCircle.getWidth()/2);
 
-        revealAnimator.setStartDelay(500);
-        revealAnimator.setDuration(1000);
+        revealAnimator.setStartDelay(250);
 
         revealAnimator.addListener(new Animator.AnimatorListener() {
             @Override
@@ -481,18 +493,43 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         revealAnimator.start();
     }
 
-    private void setRegisterFieldVisibilities(boolean bool){
-        mRegisterButton.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterSwitch.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterUserImage.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterUserInput.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterUser.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPasswordImage.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPasswordInput.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPassword.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPasswordImage2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPasswordInput2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
-        mRegisterPassword2.setVisibility(bool ? View.VISIBLE: View.INVISIBLE);
+
+    private void setRegisterFieldVisibilities(boolean visible){
+        mRegisterButton.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterSwitch.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUserImage.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUserInput.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterUser.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordImage.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordInput.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPassword.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordImage2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPasswordInput2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+        mRegisterPassword2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        int i = v.getId();
+
+        if (i == R.id.login_button) {
+        } else if (i == R.id.register_button) {
+            registerNewUser();
+        } else if (i == R.id.x_in_circle) {
+
+            if(mRegisterForm.getVisibility() == View.INVISIBLE) {
+                reveal_forward = true;
+                buttonToCornerAnimations.clear();
+                buttonToCenterAnimations.clear();
+                runForwardAnimations();
+            }
+            else {
+                reveal_forward = false;
+                runBackwardAnimations();
+            }
+
+        }
     }
 }
 

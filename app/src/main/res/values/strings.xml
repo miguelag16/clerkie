@@ -10,6 +10,14 @@
     <string name="switch_on"> Email </string>
     <string name="switch_off"> Phone </string>
 
+    <string name="registration_email_success"> To complete the registration process and login, please use this device to
+        access the verification link sent to this email address. </string>
+    <string name="registration_email_failure"> Failure to send verification email.
+        Please try again or provide a different email address. </string>
+
+    <string name="registration_failure_weak_password"> The provided password is too weak. Please provide a different password to register. </string>
+    <string name="registration_failure_invalid_credentials"> The provided username is malformed. Please provide a valid username to register. </string>
+    <string name="registration_failure_account_collision"> The provided username already exists. Please provide a unique username to register. </string>
 
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
