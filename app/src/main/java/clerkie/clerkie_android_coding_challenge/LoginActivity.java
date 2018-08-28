@@ -6,17 +6,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -26,6 +28,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.FirebaseTooManyRequestsException;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -33,9 +37,12 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.database.DatabaseReference;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A login screen that offers login via email/password.
@@ -61,7 +68,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (mAuth.isSignInWithEmailLink(emailLink)) {
 
             SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-            String email = sharedPref.getString("registration_user_field", "");
+            String email = sharedPref.getString(mNewUserEmailKey, "");
+            final String password = sharedPref.getString(mNewUserPasswordKey, "");
+
             // The client SDK will parse the code from the link for you.
             mAuth.signInWithEmailLink(email, emailLink)
                     .addOnCompleteListener(new OnCompleteListener() {
@@ -78,7 +87,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 Toast.makeText(LoginActivity.this, "Successfully signed in with email link!",
                                         Toast.LENGTH_SHORT).show();
 
+                                FirebaseUser user = result.getUser();
+                                user.updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            Log.d(TAG, "User password updated.");
+                                        }
+                                    }
+                                });
                             } else {
+
                                 Log.e(TAG, "Error signing in with email link: "
                                         + task.getException().getMessage());
                                 Toast.makeText(LoginActivity.this, "Error signing in with email link: "
@@ -91,12 +110,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 //        updateUI(currentUser);
     }
 
+    // Shared preferences keys
+    String mVerificationIdKey = "verification_id";
+    String mNewUserEmailKey = "new_user_username";
+    String mNewUserPasswordKey = "new_user_password";
+
     // UI references.
-    private EditText mEmailField;
-    private EditText mPasswordField;
-    private EditText mPasswordCheckField;
+    private TextView mLoginActivityMessage;
     private View mRevealCircle;
     private TextView mXinCircle;
+    private Switch mSwitch;
 
     // Login box UI references
     private View mLoginForm;
@@ -114,7 +137,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private View mRegisterForm;
     private View mRegisterLayout;
     private TextView mRegisterMessageBox;
-    private View mRegisterSwitch;
     private Button mRegisterButton;
     private ImageView mRegisterUserImage;
     private TextInputLayout mRegisterUserInput;
@@ -137,11 +159,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         // Set up the FirebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
 
-        // Fields
-        mEmailField = (EditText) findViewById(R.id.login_username);
-        mPasswordField = (EditText) findViewById(R.id.login_password);
-
-
         // Set login UI views
         mLoginForm = findViewById(R.id.include_login_form);
         mLoginLayout = findViewById(R.id.login_layout_root);
@@ -158,7 +175,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterForm = findViewById(R.id.include_register_form);
         mRegisterLayout = findViewById(R.id.register_layout_root);
         mRegisterMessageBox = findViewById(R.id.register_message_box);
-        mRegisterSwitch = findViewById(R.id.register_switch);
         mRegisterButton = findViewById(R.id.register_button);
         mRegisterUserImage = findViewById(R.id.register_username_image);
         mRegisterUserInput = findViewById(R.id.register_username_input);
@@ -172,26 +188,123 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         // Views
         mProgressView = findViewById(R.id.login_progress);
+        mLoginActivityMessage = findViewById(R.id.login_activity_message);
         mRevealCircle = findViewById(R.id.reveal_circle);
         mXinCircle = findViewById(R.id.x_in_circle);
+        mSwitch = findViewById(R.id.switch1);
 
-        // Click listeners
+        // Listeners
+        mLoginButton.setOnClickListener(this);
         mRegisterButton.setOnClickListener(this);
         mRevealCircle.setOnClickListener(this);
         mXinCircle.setOnClickListener(this);
+        TextView.OnEditorActionListener sendSMSCodeOnEnterPressed = new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (mSwitch.isChecked()) {
+                    if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                        sendSMSCode();
+                    }
+                }
+                return false;
+            }
+        };
+        mLoginUser.setOnEditorActionListener(sendSMSCodeOnEnterPressed);
+
+
+        showInstructions(R.string.login_instructions_initial);
     }
 
-    private void registerNewUser() {
-        Log.d(TAG, "createAccount:" + mRegisterUser.getText().toString());
-        if (!validateForm()) {
+
+    private void login(){
+        if (!validateLoginForm()) {
             return;
         }
-        createNewUserAccount();
-//        showProgressDialog();
+
+        if (mSwitch.isChecked()){
+            String code = mLoginPassword.getText().toString();
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(mInstanceStateVerificationId, code);
+            signInWithPhoneAuthCredential(credential);
+        } else {
+            signInWithEmailAndPassword();
+        }
+    }
+
+    private void registerNewEmailUser() {
+        Log.d(TAG, "createAccount:" + mRegisterUser.getText().toString());
+        if (!validateRegisterForm()) {
+            return;
+        }
+        createNewEmailUsernameAccount();
+    }
+
+    private void signInWithEmailAndPassword(){
+        mAuth.signInWithEmailAndPassword(mLoginUser.getText().toString(), mLoginPassword.getText().toString())
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithEmail:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithEmail:failure", task.getException());
+                            Toast.makeText(LoginActivity.this, "Authentication failed. " + mLoginUser.getText().toString() + " " + mLoginPassword.getText().toString(),
+                                    Toast.LENGTH_SHORT).show();
+
+                        }
+                        // ...
+                    }
+                });
+    }
+
+    private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithCredential:success");
+
+                            FirebaseUser user = task.getResult().getUser();
+                            // ...
+                        } else {
+                            // Sign in failed, display a message and update the UI
+                            Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
+                                // The verification code entered was invalid
+                                showInstructions(R.string.sms_incorrect);
+                            }
+                        }
+                    }
+                });
     }
 
 
-    private boolean validateForm() {
+    private boolean validateLoginForm(){
+        boolean valid = true;
+
+        if (TextUtils.isEmpty(mLoginUser.getText().toString())) {
+            mLoginUser.setError("Required.");
+            valid = false;
+        } else {
+            mLoginUser.setError(null);
+        }
+
+        if (TextUtils.isEmpty(mLoginPassword.getText().toString())) {
+            mLoginPassword.setError("Required.");
+            valid = false;
+        } else {
+            mLoginPassword.setError(null);
+        }
+
+        return valid;
+    }
+
+
+    private boolean validateRegisterForm() {
         boolean valid = true;
 
         if (TextUtils.isEmpty(mRegisterUser.getText().toString())) {
@@ -226,7 +339,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         return valid;
     }
 
-    private void createNewUserAccount(){
+    private void createNewEmailUsernameAccount(){
         mAuth.createUserWithEmailAndPassword(mRegisterUser.getText().toString(), mRegisterPassword.getText().toString())
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -281,14 +394,23 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 });
     }
 
+
     private void onVerificationEmailSendAttempt(boolean sent){
         if (sent){
-            Log.d(TAG, "Verification mail sent successfully.");
-            mRegisterMessageBox.setText(R.string.registration_email_success);
+            String user = mRegisterUser.getText().toString();
+            String password = mRegisterPassword.getText().toString();
+            Toast.makeText(this, user + " " + password, Toast.LENGTH_LONG).show();
 
             SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-            sharedPref.edit().putString("registration_user_field", mRegisterUser.getText().toString()).apply();
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(mNewUserEmailKey, user);
+            editor.putString(mNewUserPasswordKey, password);
+            editor.commit();
+
+            Log.d(TAG, "Verification mail sent successfully.");
+            mRegisterMessageBox.setText(R.string.registration_email_success);
         } else {
+
             Log.w(TAG, "Verification mail failed to send.");
             mRegisterMessageBox.setText(R.string.registration_email_failure);
         }
@@ -297,15 +419,87 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
+    private String mInstanceStateVerificationId;
+    private void sendSMSCode() {
+        if (mLoginUser.getText() == null || mLoginUser.getText().toString().length() != 10) {
+            showInstructions(R.string.sms_malformed_number1);
+            return;
+        }
+
+        PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                "+1" + mLoginUser.getText().toString(),        // Phone number to verify
+                60,                 // Timeout duration
+                TimeUnit.SECONDS,   // Unit of timeout
+                this,               // Activity (for callback binding)
+                new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+
+                    @Override
+                    public void onVerificationCompleted(PhoneAuthCredential credential) {
+                        // This callback will be invoked in two situations:
+                        // 1 - Instant verification. In some cases the phone number can be instantly
+                        //     verified without needing to send or enter a verification code.
+                        // 2 - Auto-retrieval. On some devices Google Play services can automatically
+                        //     detect the incoming verification SMS and perform verification without
+                        //     user action.
+                        Log.d(TAG, "onVerificationCompleted:" + credential);
+
+                        showInstructions(R.string.sms_sent_and_autoverified);
+                        signInWithPhoneAuthCredential(credential);
+                    }
+
+                    @Override
+                    public void onVerificationFailed(FirebaseException e) {
+                        // This callback is invoked in an invalid request for verification is made,
+                        // for instance if the the phone number format is not valid.
+                        Log.w(TAG, "onVerificationFailed", e);
+
+                        showInstructions(R.string.sms_sent_failed);
+
+                        if (e instanceof FirebaseAuthInvalidCredentialsException) {
+                            // Invalid request
+                            // ...
+                        } else if (e instanceof FirebaseTooManyRequestsException) {
+                            // The SMS quota for the project has been exceeded
+                            // ...
+                        }
+
+                        // Show a message and update the UI
+                        // ...
+                    }
+
+                    @Override
+                    public void onCodeSent(String verificationId,
+                                           PhoneAuthProvider.ForceResendingToken token) {
+                        // The SMS verification code has been sent to the provided phone number, we
+                        // now need to ask the user to enter the code and then construct a credential
+                        // by combining the code with a verification ID.
+                        Log.d(TAG, "onCodeSent:" + verificationId);
+
+                        showInstructions(R.string.sms_sent_success);
+
+                        // Save verification ID and resending token so we can use them later
+                        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        editor.putString(mVerificationIdKey, verificationId);
+                        editor.commit();
+//                        mResendToken = token;
+                    }
+                });
+
+    }
+
+
     private void showMessageInRegistrationBox(){
         mRegisterMessageBox.setVisibility(View.VISIBLE);
         setRegisterFieldVisibilities(false);
+        setLoginFieldVisibilities(false);
 
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                // Actions to do after 5 seconds
+                // Actions to do after 10 seconds
                 mRegisterMessageBox.setVisibility(View.INVISIBLE);
+                setLoginFieldVisibilities(true);
                 runBackwardAnimations();
             }
         }, 10000);
@@ -331,14 +525,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         ArrayList<ObjectAnimator> xToCornerAnimations = getXtoCornerAnimations(cornerX, cornerY);
         buttonToCornerAnimations.addAll(xToCornerAnimations);
 
-        revealForward(xToCornerAnimations);
+        revealRegisterFormForward(xToCornerAnimations);
     }
 
 
     private void runBackwardAnimations(){
         // Send the 'X' to the center first by reversing these animations
         for(ObjectAnimator objectAnimator : buttonToCornerAnimations) objectAnimator.reverse();
-        revealBackward();
+        revealRegisterFormBackward();
     }
 
 
@@ -419,7 +613,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-    private void revealForward(final ArrayList<ObjectAnimator> xToCornerAnimations){
+    private void revealRegisterFormForward(final ArrayList<ObjectAnimator> xToCornerAnimations){
             Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
                     mRegisterForm,
                     mRegisterForm.getWidth()/2,
@@ -458,7 +652,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-    private void revealBackward(){
+    private void revealRegisterFormBackward(){
         Animator revealAnimator = ViewAnimationUtils.createCircularReveal(
                 mRegisterForm,
                 mRegisterForm.getWidth()/2,
@@ -494,9 +688,70 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
+    private ObjectAnimator currentInstructionAnimation = null;
+    private void showInstructions(final int message){
+        if(currentInstructionAnimation != null) currentInstructionAnimation.end();
+
+        final ObjectAnimator animationShow = ObjectAnimator.ofFloat(mLoginActivityMessage, "alpha", 1);
+        animationShow.setStartDelay(1000);
+        animationShow.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                currentInstructionAnimation = animationShow;
+                mLoginActivityMessage.setText(message);
+            }
+
+            @Override
+            public void onAnimationEnd(final Animator animation) {
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        // Actions to do after 10 seconds
+                        final ObjectAnimator animationHide = ObjectAnimator.ofFloat(mLoginActivityMessage, "alpha", 0);
+                        animationHide.setDuration(500);
+                        animationHide.addListener(new Animator.AnimatorListener() {
+                            @Override
+                            public void onAnimationStart(Animator animation) {
+                                currentInstructionAnimation = animationHide;
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                mLoginActivityMessage.setText("");
+                            }
+
+                            @Override
+                            public void onAnimationCancel(Animator animation) {
+
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animator animation) {
+
+                            }
+                        });
+                        animationHide.start();
+                    }
+                }, 10000);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        animationShow.start();
+    }
+
+
     private void setRegisterFieldVisibilities(boolean visible){
+        findViewById(R.id.register_static_instructions).setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         mRegisterButton.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
-        mRegisterSwitch.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
         mRegisterUserImage.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
         mRegisterUserInput.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
         mRegisterUser.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
@@ -506,6 +761,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         mRegisterPasswordImage2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
         mRegisterPasswordInput2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
         mRegisterPassword2.setVisibility(visible ? View.VISIBLE: View.INVISIBLE);
+    }
+
+    private void setLoginFieldVisibilities(boolean visible){
+        mLoginButton.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginUserImage.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginUserInput.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginUser.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginPasswordImage.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginPasswordInput.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginPassword.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        mLoginForgotPassword.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
 
     private void displayRegisterForm(){
@@ -521,18 +787,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void switchOnClick(View view){
-        if (mRegisterForm.getVisibility() == View.VISIBLE){
-            if(mRegisterUser.getInputType() != (InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE)) {
-                mRegisterUser.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE);
-            } else {
-                mRegisterUser.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS);
-            }
+        mLoginUser.setText("");
+        if(mLoginUser.getInputType() != (InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE)) {
+            mLoginUser.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE);
+            mLoginUser.setFilters(new InputFilter[] {
+                    new InputFilter.LengthFilter(10)
+            });
+            showInstructions(R.string.login_instructions_phone);
         } else {
-            if(mLoginUser.getInputType() != (InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE)) {
-                mLoginUser.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_CLASS_PHONE);
-            } else {
-                mLoginUser.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS);
-            }
+            mLoginUser.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS);
+            mLoginUser.setFilters(new InputFilter[] {
+                    new InputFilter.LengthFilter(50)
+            });
         }
     }
 
@@ -541,8 +807,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         int i = v.getId();
 
         if (i == R.id.login_button) {
+            login();
         } else if (i == R.id.register_button) {
-            registerNewUser();
+            registerNewEmailUser();
         } else if (i == R.id.x_in_circle) {
             if (mRegisterForm.getVisibility() == View.INVISIBLE) {
                 displayRegisterForm();

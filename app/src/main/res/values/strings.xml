@@ -2,14 +2,26 @@
     <string name="app_name"> cnote </string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email"> Username </string>
-    <string name="prompt_password">Password </string>
+    <string name="prompt_user"> User </string>
+    <string name="prompt_email"> Email </string>
+    <string name="prompt_password_login">Password or SMS code</string>
+    <string name="prompt_password_register">Password </string>
     <string name="action_register">Register</string>
     <string name="action_sign_in">Sign in</string>
     <string name="action_forgot_password">Forgot password?</string>
     <string name="switch_on"> Email </string>
     <string name="switch_off"> Phone </string>
 
+    <string name="login_instructions_initial"> Login with an existing account, or press + to register </string>
+    <string name="login_instructions_phone"> Press \'next\' to send an SMS code </string>
+
+    <string name="sms_malformed_number1"> Please enter a valid 10-digit US number </string>
+    <string name="sms_sent_success"> SMS code has been sent (expires in 60s)</string>
+    <string name="sms_sent_failed"> SMS code failed to send </string>
+    <string name="sms_sent_and_autoverified"> SMS code verified! </string>
+    <string name="sms_incorrect"> Incorrect SMS code </string>
+
+    <string name="register_instructions"> Register using an email account. </string>
     <string name="registration_email_success"> To complete the registration process and login, please use this device to
         access the verification link sent to this email address. </string>
     <string name="registration_email_failure"> Failure to send verification email.
