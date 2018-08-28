@@ -4,4 +4,8 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
 
     <dimen name="mtrl_card_spacing">10dp</dimen>
+
+    <dimen name="scroll_view_height"> 116dp </dimen>
+    <dimen name="thumbnail_dims"> 100dp </dimen>
+    <dimen name="thumbnail_padding"> 8dp </dimen>
 </resources>
