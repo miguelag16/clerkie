@@ -109,6 +109,7 @@
 
     <TextView
         android:id="@+id/login_forgot_password"
+        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"

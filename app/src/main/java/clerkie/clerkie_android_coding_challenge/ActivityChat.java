@@ -20,6 +20,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.card.MaterialCardView;
 import android.support.v4.app.ActivityCompat;
@@ -29,23 +30,44 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
 import android.widget.VideoView;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ActivityChat extends AppCompatActivity implements View.OnClickListener {
 
+    private String TAG = "ActivityChat";
     private boolean galleryIsLoading = false;
     private Cursor media_cursor = null;
 
@@ -187,10 +209,18 @@ public class ActivityChat extends AppCompatActivity implements View.OnClickListe
     private ImageView mGalleryRightArrow;
     private ImageView mGalleryLeftArrow;
 
+    private ListView mMessageList;
+    private ImageView mSendMessageButton;
+
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseUser currentUser;
+    private FirebaseFirestore database;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        currentUser = mAuth.getCurrentUser();
 
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -203,19 +233,25 @@ public class ActivityChat extends AppCompatActivity implements View.OnClickListe
         mGalleryRightArrow = findViewById(R.id.chat_gallery_right);
         mGalleryLeftArrow = findViewById(R.id.chat_gallery_left);
 
+        // Message UI references
+        mMessageList = findViewById(R.id.chat_message_list);
+        mSendMessageButton = findViewById(R.id.chat_message_send_button);
+
         mGalleryRightArrow.setOnClickListener(this);
         mGalleryLeftArrow.setOnClickListener(this);
+        mSendMessageButton.setOnClickListener(this);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_CONTACTS},
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         } else {
-            //disable gallery feature
+            new LoadMediaToGalleryTask().execute(0);
         }
 
-        new LoadMediaToGalleryTask().execute(0);
+        database = FirebaseFirestore.getInstance();
+        refreshMessagesListView();
     }
 
 
@@ -228,8 +264,8 @@ public class ActivityChat extends AppCompatActivity implements View.OnClickListe
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
+                    // storage-related task you need to do.
+                    new LoadMediaToGalleryTask().execute(0);
                 } else {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -247,8 +283,9 @@ public class ActivityChat extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view){
         int id = view.getId();
 
-
-        if(id == R.id.chat_gallery_left){
+        if (id == R.id.chat_message_send_button){
+            sendMessage();
+        } else if(id == R.id.chat_gallery_left){
             if (galleryIsLoading) return;
             SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
             int group = sharedPref.getInt(mGalleryIndex, 0);
@@ -274,6 +311,69 @@ public class ActivityChat extends AppCompatActivity implements View.OnClickListe
             new LoadMediaToGalleryTask().execute(10*(group+1));
 
         }
+    }
+
+
+    private void sendMessage(){
+        String msg = ((EditText)findViewById(R.id.chat_message_text)).getText().toString();
+
+        Date currentTime = Calendar.getInstance().getTime();
+        long timestamp = currentTime.getTime();
+
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+
+        Map<String, Object> new_message = new HashMap<>();
+        new_message.put(currentUser.getUid() + "_" + Long.toString(timestamp), msg);
+
+        // Write a message to the database
+        database = FirebaseFirestore.getInstance();
+        database.collection("chat").document().set(new_message).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ((EditText)findViewById(R.id.chat_message_text)).setText("");
+                refreshMessagesListView();
+            }
+        }
+        );
+    }
+
+    private void refreshMessagesListView(){
+        database.collection("chat").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.isSuccessful()) {
+//                        Toast.makeText(ActivityChat.this, task.getResult().size() + " ", Toast.LENGTH_LONG).show();
+                        List<String> messages = new ArrayList<>();
+
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Log.d(TAG, document.getId() + " => " + document.getData());
+                            for (String key : document.getData().keySet()){
+                                String msg = (String)document.get(key);
+                                messages.add(msg);
+                            }
+                        }
+
+                        loadMessages(messages);
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+    }
+
+    private ArrayAdapter<String> mArrayAdapter;
+    private void loadMessages(List<String> messages){
+        mArrayAdapter = new ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                messages );
+
+        mArrayAdapter.notifyDataSetChanged();
+        mMessageList.setAdapter(mArrayAdapter);
     }
 
 }

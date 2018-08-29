@@ -39,7 +39,6 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
-import com.google.firebase.database.DatabaseReference;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -47,18 +46,20 @@ import java.util.concurrent.TimeUnit;
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
+public class ActivityLogin extends AppCompatActivity implements View.OnClickListener {
 
 
-    private final String TAG = "LoginActivity";
-    private FirebaseAuth mAuth;
-    private DatabaseReference mUserDatabaseReference;
+    private final String TAG = "ActivityLogin";
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseUser currentUser;
 
     @Override
     protected void onStart() {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null){ intentIntoChat();}
 
         Intent intent = getIntent();
         if (intent.getData() == null) return;
@@ -84,15 +85,16 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 // result.getAdditionalUserInfo().getProfile() == null
                                 // You can check if the user is new or existing:
                                 // result.getAdditionalUserInfo().isNewUser()
-                                Toast.makeText(LoginActivity.this, "Successfully signed in with email link!",
+                                Toast.makeText(ActivityLogin.this, "Successfully signed in with email link!",
                                         Toast.LENGTH_SHORT).show();
 
-                                FirebaseUser user = result.getUser();
-                                user.updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                currentUser = result.getUser();
+                                currentUser.updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
                                         if (task.isSuccessful()) {
                                             Log.d(TAG, "User password updated.");
+                                            if (currentUser != null){ intentIntoChat();}
                                         }
                                     }
                                 });
@@ -100,7 +102,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
                                 Log.e(TAG, "Error signing in with email link: "
                                         + task.getException().getMessage());
-                                Toast.makeText(LoginActivity.this, "Error signing in with email link: "
+                                Toast.makeText(ActivityLogin.this, "Error signing in with email link: "
                                                 + task.getException().getMessage(),
                                         Toast.LENGTH_SHORT).show();
                             }
@@ -215,6 +217,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         showInstructions(R.string.login_instructions_initial);
     }
 
+    private void intentIntoChat(){
+        if (currentUser != null){
+        Intent intent = new Intent(this, ActivityChat.class);
+//        intent.putExtra("user_id", currentUser.getUid());
+        startActivity(intent);
+        } else {
+            Log.d(TAG, "Error: current user is null when attempting to start chat activity.");
+        }
+    }
 
     private void login(){
         if (!validateLoginForm()) {
@@ -223,7 +234,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         if (mSwitch.isChecked()){
             String code = mLoginPassword.getText().toString();
-            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(mInstanceStateVerificationId, code);
+
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            String verificationID = sharedPref.getString(mVerificationIdKey, null);
+            if (verificationID == null){
+                Log.d(TAG, "verificationID is null");
+            }
+
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(mVerificationIdKey, code);
             signInWithPhoneAuthCredential(credential);
         } else {
             signInWithEmailAndPassword();
@@ -246,11 +264,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
+                            currentUser = mAuth.getCurrentUser();
+                            if (currentUser != null){ intentIntoChat();}
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(LoginActivity.this, "Authentication failed. " + mLoginUser.getText().toString() + " " + mLoginPassword.getText().toString(),
+                            Toast.makeText(ActivityLogin.this, "Authentication failed. " + mLoginUser.getText().toString() + " " + mLoginPassword.getText().toString(),
                                     Toast.LENGTH_SHORT).show();
 
                         }
@@ -268,8 +287,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
 
-                            FirebaseUser user = task.getResult().getUser();
-                            // ...
+                            currentUser = task.getResult().getUser();
+                            if (currentUser != null){ intentIntoChat();}
                         } else {
                             // Sign in failed, display a message and update the UI
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
@@ -349,7 +368,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             Log.d(TAG, "createUserWithEmail: success");
                             sendVerificationEmailToUser();
                         } else {
-                            // If sign in fails, display a message to the user.
+                            // If registration in fails, display a message to the user.
                             Log.w(TAG, "createUserWithEmail: failure", task.getException());
                             try {
                                 throw task.getException();
@@ -419,7 +438,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
 
-    private String mInstanceStateVerificationId;
     private void sendSMSCode() {
         if (mLoginUser.getText() == null || mLoginUser.getText().toString().length() != 10) {
             showInstructions(R.string.sms_malformed_number1);
