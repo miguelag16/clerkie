@@ -220,7 +220,7 @@ public class ActivityLogin extends AppCompatActivity implements View.OnClickList
     private void intentIntoChat(){
         if (currentUser != null){
         Intent intent = new Intent(this, ActivityChat.class);
-//        intent.putExtra("user_id", currentUser.getUid());
+        //        intent.putExtra("user_id", currentUser.getUid());
         startActivity(intent);
         } else {
             Log.d(TAG, "Error: current user is null when attempting to start chat activity.");
